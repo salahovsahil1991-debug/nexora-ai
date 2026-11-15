@@ -3,65 +3,296 @@
 <html lang="az">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NEXORA AI - Official</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEXORA APK STORE</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-* { box-sizing:border-box; }
-body {
-  margin:0;
-  background:#080f1e;
-  color:white;
-  font-family:Arial,sans-serif;
-  text-align:center;
-  padding:35px 15px;
-}
-.container {
-  max-width:500px;
-  margin:50px auto;
-  padding:35px 22px;
-  background:#14233b;
-  border:1px solid #294363;
-  border-radius:22px;
-}
-.logo { font-size:65px; }
-h1 { color:#56e6c1; font-size:36px; }
-p { color:#c4d2e5; line-height:1.7; }
-.download {
-  display:inline-block;
-  margin:22px 0;
-  padding:16px 30px;
-  background:#56e6c1;
-  color:#071b18;
-  text-decoration:none;
-  font-weight:bold;
-  border-radius:12px;
-}
-.security {
-  margin-top:25px;
-  padding:15px;
-  background:#0b1729;
-  border-radius:12px;
-  color:#aebfd3;
-  font-size:14px;
-}
+*{box-sizing:border-box}
+body{margin:0;background:#080d1b;color:#f4f7ff;font:16px Arial,sans-serif}
+.wrap{max-width:1050px;margin:auto;padding:20px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.logo{font-size:24px;font-weight:900}.logo span{color:#39a7ff}
+button,.btn{border:0;border-radius:12px;padding:13px 17px;background:#39a7ff;color:#06111f;font-weight:bold;cursor:pointer;text-decoration:none;display:inline-block}
+.secondary{background:#263650;color:white}.danger{background:#8d3040;color:white}
+.hero{text-align:center;padding:48px 10px 30px}
+.hero h1{font-size:clamp(30px,7vw,50px);margin:10px 0}
+.muted{color:#9aabc5}
+input,textarea{width:100%;padding:13px;border:1px solid #293b58;border-radius:11px;background:#0d1729;color:white;font-size:16px}
+.search{margin:15px 0 22px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.card,.admin{background:#111d31;border:1px solid #293b58;border-radius:18px;padding:18px}
+.appicon{width:58px;height:58px;border-radius:15px;background:#1d3859;display:grid;place-items:center;font-size:28px}
+.card h3{margin:12px 0 5px}.meta{font-size:13px;color:#9aabc5;margin:8px 0}
+.desc{color:#c8d3e4;min-height:40px;white-space:pre-wrap;overflow-wrap:anywhere}
+.card .btn{width:100%;text-align:center;margin-top:13px}
+.empty{text-align:center;padding:30px;color:#9aabc5;border:1px dashed #293b58;border-radius:15px}
+.admin{margin-top:30px}.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+textarea{min-height:90px;grid-column:1/-1}
+.wide{grid-column:1/-1}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:13px;align-items:center}
+.hidden{display:none!important}.status{color:#9fd4ff;margin-top:12px;overflow-wrap:anywhere}
+.adminitem{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid #293b58;padding:12px 0}
+footer{text-align:center;color:#7587a3;padding:35px 0;font-size:13px}
+@media(max-width:600px){.wrap{padding:14px}.fields{grid-template-columns:1fr}textarea,.wide{grid-column:auto}}
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="logo">🚀</div>
-  <h1>NEXORA AI</h1>
-  <p>Welcome to the official NEXORA AI download page.</p>
-  <p>NEXORA AI tətbiqini rəsmi səhifəmizdən yükləyin.</p>
+<div class="wrap">
+<header>
+  <div class="logo">NEXORA <span>APK STORE</span></div>
+  <button class="secondary" id="adminToggle">Admin panel</button>
+</header>
 
-  <a class="download" href="NEXORA-AI.apk" download>
-    APK-NI YÜKLƏ
-  </a>
+<section class="hero">
+  <div style="font-size:48px">🚀</div>
+  <h1>Seç. Yüklə. İstifadə et.</h1>
+  <p class="muted">NEXORA tətbiqlərinin rəsmi yükləmə mərkəzi</p>
+</section>
 
-  <div class="security">
-    🔒 Rəsmi yükləmə səhifəsi<br><br>
-    Yalnız rəsmi APK faylından istifadə edin.<br>
-    © 2026 NEXORA AI
+<input class="search" id="search" placeholder="Tətbiq axtar...">
+
+<div class="grid" id="apps">
+  <div class="empty">Tətbiqlər yüklənir...</div>
+</div>
+
+<section class="admin hidden" id="adminPanel">
+<h2>Admin paneli</h2>
+
+<div id="setupWarning" class="hidden">
+  Supabase bağlantısı qurulmayıb. API məlumatlarını yoxla.
+</div>
+
+<div id="loginBox">
+  <p class="muted">Admin hesabına daxil ol.</p>
+  <div class="fields">
+    <input id="email" type="email" placeholder="Gmail">
+    <input id="password" type="password" placeholder="Parol">
+  </div>
+  <div class="row">
+    <button id="loginBtn">Daxil ol</button>
   </div>
 </div>
+
+<div id="manageBox" class="hidden">
+  <h3>Yeni APK əlavə et</h3>
+  <div class="fields">
+    <input id="appName" placeholder="Tətbiqin adı">
+    <input id="version" placeholder="Versiya, məsələn 1.0">
+    <input id="category" placeholder="Kateqoriya">
+    <input id="icon" placeholder="İkon (məsələn 📱)">
+    <textarea id="description" placeholder="Tətbiq haqqında məlumat"></textarea>
+    <div class="wide">
+      <label>APK faylını seç:</label>
+      <input id="apkFile" type="file" accept=".apk,application/vnd.android.package-archive">
+    </div>
+  </div>
+  <div class="row">
+    <button id="uploadBtn">APK ƏLAVƏ ET</button>
+    <button class="secondary" id="logoutBtn">Çıxış</button>
+  </div>
+  <h3>Yüklənmiş tətbiqlər</h3>
+  <div id="adminApps"></div>
+</div>
+<div class="status" id="status"></div>
+</section>
+
+<footer>© <span id="year"></span> NEXORA APK STORE</footer>
+</div>
+
+<script>
+// SUPABASE BAĞLANTISI
+const SUPABASE_URL = "https://ieikeabuekmnpatabniq.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_HjflS0AnT1YfATzEGMxYUw_Dz26r0iK";
+const BUCKET = "apk-files";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $ = id => document.getElementById(id);
+let currentApps = [];
+
+$("year").textContent = new Date().getFullYear();
+
+$("adminToggle").onclick = () => {
+  $("adminPanel").classList.toggle("hidden");
+};
+
+$("search").addEventListener("input", renderApps);
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  })[c]);
+}
+
+function renderApps() {
+  const q = $("search").value.trim().toLowerCase();
+
+  const list = currentApps.filter(a =>
+    (a.name+" "+(a.category||"")+" "+(a.description||""))
+      .toLowerCase().includes(q)
+  );
+
+  $("apps").innerHTML = list.length ? list.map(a => `
+    <div class="card">
+      <div class="appicon">${escapeHTML(a.icon || "📱")}</div>
+      <h3>${escapeHTML(a.name)}</h3>
+      <div class="meta">
+        ${escapeHTML(a.category || "Android tətbiqi")}
+        · ${a.version ? "v"+escapeHTML(a.version) : ""}
+      </div>
+      <div class="desc">${escapeHTML(a.description || "")}</div>
+      <a class="btn" href="${escapeHTML(a.download_url)}"
+         target="_blank" rel="noopener">
+         ⬇ APK YÜKLƏ
+      </a>
+    </div>
+  `).join("") : '<div class="empty">Hələ heç bir tətbiq əlavə edilməyib.</div>';
+}
+
+async function loadApps() {
+  const {data, error} = await db
+    .from("apps")
+    .select("*")
+    .order("created_at", {ascending:false});
+
+  if(error) {
+    $("apps").innerHTML = '<div class="empty">Tətbiqlər yüklənmədi: '+escapeHTML(error.message)+'</div>';
+    return;
+  }
+
+  currentApps = data || [];
+  renderApps();
+  await renderAdminApps();
+}
+
+async function syncAuth() {
+  const {data} = await db.auth.getSession();
+  const logged = !!data.session;
+
+  $("loginBox").classList.toggle("hidden", logged);
+  $("manageBox").classList.toggle("hidden", !logged);
+
+  if(logged) await renderAdminApps();
+}
+
+$("loginBtn").onclick = async () => {
+  const {error} = await db.auth.signInWithPassword({
+    email:$("email").value.trim(),
+    password:$("password").value
+  });
+
+  $("status").textContent = error
+    ? "Giriş xətası: "+error.message
+    : "Admin girişi uğurludur.";
+
+  if(!error) await syncAuth();
+};
+
+$("logoutBtn").onclick = async () => {
+  const {error} = await db.auth.signOut();
+  $("status").textContent = error ? error.message : "Hesabdan çıxıldı.";
+  await syncAuth();
+};
+
+$("uploadBtn").onclick = async () => {
+  const name = $("appName").value.trim();
+  const file = $("apkFile").files[0];
+
+  if(!name || !file) {
+    $("status").textContent = "Tətbiqin adını və APK faylını seç.";
+    return;
+  }
+
+  if(!file.name.toLowerCase().endsWith(".apk")) {
+    $("status").textContent = "Yalnız APK faylı qəbul edilir.";
+    return;
+  }
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = Date.now()+"-"+safeName;
+
+  $("uploadBtn").disabled = true;
+  $("status").textContent = "APK yüklənir...";
+
+  try {
+    const {error:uploadError} = await db.storage
+      .from(BUCKET)
+      .upload(path, file, {
+        contentType:"application/vnd.android.package-archive",
+        upsert:false
+      });
+
+    if(uploadError) throw uploadError;
+
+    const {data:urlData} = db.storage
+      .from(BUCKET)
+      .getPublicUrl(path);
+
+    const {error:insertError} = await db.from("apps").insert({
+      name,
+      version:$("version").value.trim(),
+      category:$("category").value.trim(),
+      icon:$("icon").value.trim() || "📱",
+      description:$("description").value.trim(),
+      file_path:path,
+      download_url:urlData.publicUrl
+    });
+
+    if(insertError) {
+      await db.storage.from(BUCKET).remove([path]);
+      throw insertError;
+    }
+
+    $("status").textContent = "APK uğurla əlavə edildi!";
+    ["appName","version","category","icon","description"].forEach(id => $(id).value = "");
+    $("apkFile").value = "";
+    await loadApps();
+
+  } catch(e) {
+    $("status").textContent = "Xəta: "+(e.message || String(e));
+  } finally {
+    $("uploadBtn").disabled = false;
+  }
+};
+
+async function renderAdminApps() {
+  const {data:sessionData} = await db.auth.getSession();
+  if(!sessionData.session) return;
+
+  $("adminApps").innerHTML = currentApps.map(a => `
+    <div class="adminitem">
+      <span>${escapeHTML(a.name)} ${escapeHTML(a.version || "")}</span>
+      <button class="danger" data-id="${a.id}" data-path="${escapeHTML(a.file_path)}">Sil</button>
+    </div>
+  `).join("") || "Hələ tətbiq yoxdur.";
+
+  $("adminApps").querySelectorAll("[data-id]").forEach(button => {
+    button.onclick = async () => {
+      if(!confirm("Bu tətbiqi silmək istəyirsən?")) return;
+
+      const {error:storageError} = await db.storage
+        .from(BUCKET).remove([button.dataset.path]);
+
+      if(storageError) {
+        $("status").textContent = storageError.message;
+        return;
+      }
+
+      const {error} = await db.from("apps")
+        .delete().eq("id", button.dataset.id);
+
+      $("status").textContent = error ? error.message : "Tətbiq silindi.";
+      await loadApps();
+    };
+  });
+}
+
+$("setupWarning").classList.add("hidden");
+
+db.auth.onAuthStateChange(() => {
+  setTimeout(() => syncAuth(), 0);
+});
+
+syncAuth();
+loadApps();
+</script>
 </body>
 </html>
